@@ -1,0 +1,263 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{pgfplots} 
+\usepackage[utf8]{vietnam}
+\usepackage[tight,vietnam]{minitoc}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Nghiên cứu và ứng dụng DeepLearning trong việc tăng cường độ phân giải hình ảnh vệ tinh\\
+% {\footnotesize \textsuperscript{*}Note: Sub-titles are not captured in Xplore and
+% should not be used}
+
+}
+\author{\IEEEauthorblockN
+{
+Huu-Dat Nguyen\IEEEauthorrefmark{1},
+Hoang-Anh Trinh\IEEEauthorrefmark{1},
+TS. Hai-Ha Le\IEEEauthorrefmark{1},
+}
+\IEEEauthorblockA{\IEEEauthorrefmark{2} School of Applied Mathematics and Informatics, HUST, Hanoi, Vietnam}
+}
+
+\maketitle
+
+\begin{abstract}
+Hiện nay, đã có rất nhiều các vệ tinh từ nhiều quốc gia được phóng lên không gian và hàng tỷ hình ảnh viễn thám đã được thu thập. Các dữ liệu hình ảnh này rất đa dạng và phong phú. Đặc biệt gần đây, các công nghệ viễn thám ngày càng cải tiến, cung cấp cho chúng ta nguồn ảnh chất lượng cao, tuy nhiên chi phí cho mỗi bức ảnh vô cùng đắt đỏ nên các công ty không thể cập nhập thường xuyên. Mặt khác, một số nguồn ảnh miễn phí được cập nhập liên tục như nguồn ảnh Landsat-8,9 nhưng lại cho chất lượng ảnh thấp. Với mục đích là có thể nghiên cứu và ứng dụng các bài toán viễn thám vào thực tế. Ví dụ như xác định mực nước, phát hiện và phân loại vết dầu tràn trên biển, phát hiện cháy rừng, tính toán diện tích đất nhà ở, .... Việc luôn đảm bảo hai yếu tố: ảnh chất lượng cao và tính cập nhập liên tục của ảnh là rất cần thiết. Chính vì thế để giải quyết vấn đề, ta cần nghiên cứu phương pháp có thể tăng cường chất lượng hình ảnh. Cụ thể trong bài báo này, tác giả sẽ tập trung đưa ra các vấn đề tồn tại liên quan đến Siêu phân giải, cũng như đề xuất áp dụng mô hình ESWT vào bài toán tăng cường chất lượng ảnh vệ tinh.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Image Supper-Resolution, CNN, Transformer, Deep Learning, SwinIR, ESWT.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Khôi phục hình ảnh (Image restoration), hay tăng cường ảnh là một bài toán có nhiệm vụ giải quyết vấn đề cải thiện, nâng cao chất lượng hình ảnh. Siêu phân giải (super resolution) và khử nhiễu là hai bài toán con quan trọng và cũng được nghiên cứu nhiều nhất. Trong đó, siêu phân giải hình ảnh làm nhiệm vụ ánh xạ hình ảnh có độ phân giải thấp sang hình ảnh có độ phân giải cao. Trước đây, các công nghệ tăng chất lượng ảnh được giới thiệu thường hoạt động bằng cách ‘lấp đầy’ các điểm ảnh và các chi tiết bị thiếu bằng cách tính toán dựa vào những điểm ảnh xung quanh. Kết quả của các thuật toán trên thường bị mờ, lâu và không đạt yêu cầu. Điều mà các nhà khoa học khám phá ra công nghệ trí tuệ nhân tạo mới ngày nay là ứng dụng deeplearning cho phép máy ‘học’ và nhận diện được những đặc điểm của các bức ảnh có độ phân giải thấp rồi nghiên cứu để tìm ra các phiên bản độ phân giải cao phù hợp.
+% \begin{figure}
+%     \centering
+%     \includegraphics[scale=0.2]{images/SR.png}
+%     \caption{Bài toán siêu phân giải hình ảnh ảnh vệ tinh}
+%     \label{fig:1.1}
+% \end{figure}
+
+\begin{figure}[h] \label{fig:three-alternative-operations}
+    \begin{tabular}{cc}
+        \includegraphics[width=4cm,height=3cm]{images/LR_2.png} &
+        \includegraphics[width=4cm,height=3cm]{images/HR_2.png} \\
+        \includegraphics[width=4cm,height=3cm]{images/LR_6.png} &
+        \includegraphics[width=4cm,height=3cm]{images/HR_6.png} \\
+    \end{tabular}
+    \caption{Bài toán siêu phân giải hình ảnh ảnh vệ tinh}
+\end{figure}
+
+Trong đó không nhắc đến, tăng cường chất lượng độ phân giải của hình ảnh vệ tinh. Không chỉ bởi nó được áp dụng cho lĩnh vực viễn thám, mà ngày nay các vần đề về dân sự cũng rất cần thiết. Biện pháp nâng cao độ phân giải ảnh vệ tinh có thể thực hiện bằng cách nâng cấp, cải tiến đầu thu, bộ cảm biến trên các vệ tinh không gian. Song, điều đó là rất khó bởi chi phí vô cùng lớn, hơn nữa, khi nâng cao độ phân giải hình ảnh thì độ phân giải phổ thường bị hạn chế. Với những nguyên do đó đã thúc đẩy các nhà khoa học nghiên cứu áp dụng và giải quyết bài toán theo nhiều hướng khác nhau. Từ việc áp dụng các thuật toán cơ bản như phương pháp siêu phân giải sử dụng miền tần số, phương pháp siêu phân giải sử dụng miền không gian được đề cập trong [3] cho đến các mô hình deeplearning phức tạp như sử dụng các họ nhà GAN, họ nhà diffusion, ... Đặc biệt, trong bài báo này, chúng ta sẽ tập trung vào phương pháp siêu phân giải mù, đây là một phương pháp
+còn khá mới mẻ trong thời gian gần đây, cũng như đề xuất sử dụng mô hình ESWT (Efficient Striped Window Transformer) để giải quyết bài toán tăng cường độ phân giải hình ảnh vệ tinh
+
+\section{Related Works} \label{sect:related}
+Vì bài viết này tập trung vào việc áp dụng mô hình phân giải cao cho hình ảnh vệ tinh, chúng tôi sẽ cung cấp tổng quan ngắn gọn về ảnh vệ tinh, các phương pháp hiện có cũng như áp dụng ESWT vào bài toán.
+
+\subsection{Ảnh vệ tinh}
+Vệ tinh chứa bộ cảm biến viễn thám gọi là vệ tinh viễn thám hay có tên gọi khác là vệ tinh quan sát mặt đất. Các loại vệ tinh viễn thám bao gồm: vệ tinh khí tượng, vệ tinh địa tĩnh, vệ tinh viễn thám biển, vệ tinh tài nguyên. Các tàu vũ trụ có phi hành gia điều khiển hoặc các trạm vũ trụ sẽ có rất nhiều hệ
+thống vệ tinh viễn thám đang hoạt động: Landsat, Spot, Sojuz, IRS, Radasat, GMS.
+
+\begin{figure} [!t]
+    \centering
+    \includegraphics[scale=0.17]{images/madrid_8000_0.png}
+    \caption{Minh họa về ảnh viễn thám.}
+    \label{fig:2.2}
+\end{figure}
+
+Hình ảnh vệ tinh (hình 2), hay còn gọi là hình ảnh viễn thám, là ảnh số thể hiện các sự vật hiện tượng trên bề mặt trái đất, được thu nhận bởi các bộ cảm biến (sensor) đặt trên thiết bị thu. Để thu thập ảnh viễn thám, người ta cần sử dụng máy bay, máy bay không người lái hay các vệ tinh nhân tạo có gắn sẵn các bộ cảm biến (sensor) để thu ảnh viễn thám.
+
+Độ phân giải không gian có ý nghĩa rất quan trọng trong số các đặc điểm kỹ thuật của ảnh vệ tinh, bởi lẽ chất lượng và tỷ lệ các bản đồ được thành lập từ ảnh vệ tinh phụ thuộc rất nhiều vào yếu tố này. Nhìn chung, dựa trên độ phân giải không gian, ảnh vệ tinh có thể được chia thành: độ phân giải thấp (> 100m), độ phân giải trung bình (10 - 100m), độ phân giải cao (< 10m). 
+
+\subsection{Degradation models}
+Hầu hết các phương pháp hiện nay đều theo hướng tiếp cận học tập có giám sát, yêu cầu sử dụng thông tin cơ bản (tức là hình ảnh SR) để thuật toán biết kết quả cuối cùng sẽ như thế nào khi siêu phân giải một đối tượng nhất định (hình ảnh LR). Do đó, các mô hình xuống cấp như vậy được áp dụng trực tiếp cho hình ảnh SR để tạo ra hình ảnh LR. Hay nói cách khác, mô hình xuống cấp là quá trình biến đổi từ hình ảnh có độ phân
+giải cao thành hình ảnh có độ phân giải thấp.
+
+Thông thường, các thông số như độ lớn của sự xuống cấp sẽ được xem xét, thay đổi để tạo ra nhiều hình ảnh LR. Mô hình xuống cấp "cổ điển" được sử dụng phổ biến nhất, xem xét việc lấy mẫu xuống (down-sampling), mờ
+(blurring) và nhiễu (noise)
+\begin{align}
+    {I^{LR}} = \left( {{I^{HR}} \otimes k} \right){ \downarrow _s} + n
+    {\label{1.1}}
+\end{align}
+Trong đó, $\otimes$ biểu thị phép toán tích chập, $k$ là kernel (thường là gaussian blurring kernel), $n$ biểu thị nhiễu (noise) và $s$ là phép toán lấy mẫu xuống với hệ số tỷ lệ $s$
+
+Mô hình này được cho là quá đơn giản, với các phương pháp sử dụng nó không thể khái quát hóa tốt cho sự xuống cấp phức tạp thường thấy trong các hình ảnh trong thế giới thực. Do đó, những nghiên cứu gần đây đã có gắng thiết kế các mô hình xuống cấp thực tế hơn, chẳng hạn như đưa vào các tạo tác (artefacts) do nén rất phổ biến trong hình ảnh.
+\begin{align}
+    {I^{LR}} = \left( {\left( {{I^{HR}} \otimes k} \right){ \downarrow _s} + n} \right)C 
+    {\label{1.2}}
+\end{align}
+trong đó, $C$ là lược đồ nén chẳng hạn như JPEG. Cuối cùng, mục đích của Siêu phân giải chính là đảo ngược bất kì quá trình xuống cấp nào được xem xét, để truy xuất hình ảnh gốc với độ trung thực cao. Tổng quan về các phương pháp phổ biến để thực hiện nhiệm vụ này sẽ được cung cấp dưới đây.
+
+\subsection{Single Image super-resolution}
+Single image super-resolution (SR) [] là một chủ đề nghiên cứu rất được quan tâm. Kể từ công trình tiên phong SRCNN [] áp dụng mạng nơ-ron tích chập CNN, đã có rất nhiều kĩ thuật cũng như cách tiếp cận để giải quyết SR. Có thể được phân loại chung là 'non-blind', trong đó quá trình xuống cấp (the degradations) ảnh hưởng đến hình ảnh được cho là đã biết hoặc 'blind', khi không biết chính xác sự xuống cấp ảnh hưởng đến hình ảnh. Mặc dù các phương pháp siêu phân giải không mù cung cấp nhiều hiểu biết hữu ích về việc phát triển mạng cho SR, nhưng chúng thường không thể áp dụng được cho các hình ảnh trong thế giới thực. Điều này
+là vì các hình ảnh trong thế giới thực không thể biết được chính xác quá trình xuống cấp của nó, trong khi các phương pháp trên luôn giả định một quá trình xuống cấp cố định đã biết và do đó dễ thất bại khi tiếp cận với các quá trình xuống cấp khác và phức tạp hơn so với những quá trình mà chúng được đào tạo cụ thể (hình 2)
+\begin{figure} [!t]
+    \centering
+    \includegraphics[scale=0.4]{images/LR_HR.png}
+    \caption{Sự khác biệt giữa non-blind và blind SR. Tồn tại một khoảng cách lớn giữa kết quả SR và HR mong muốn, nguyên nhân là do áp dụng mô hình non-blind được đào tạo trước cho đầu vào LR với mô hình xuống cấp khác với mô hình giả định (ví dụ: downsampling).}
+    \label{fig:2}
+\end{figure}
+
+Ngược lại, Blind super-resolution []  luôn cải thiện đối với vấn đề này bằng cách giảm các giả định được đưa ra, ngay cả khi hầu hết các phương pháp vẫn đưa ra một số giả định về sự xuống cấp đầu vào nhằm mục đích khôi phục các hình ảnh có độ phân giải thấp bị xuống cấp phức tạp và không xác định. Các cách tiếp cận hiện tại có thể được phân loại đại khái thành \textit{explicit modeling} và \textit{implicit modeling} dựa trên loại dữ liệu được sử dụng và cách dữ liệu được mô hình hóa. Explicit modelling dựa trên mô hình xuống cấp cổ điển hoặc các biến thể của nó. Ý tưởng là tìm cách biểu diễn quá trình xuống cấp trong thế giới thực bằng một tập các quá trình xuống cấp được mô hình hóa. Các phương pháp đại diện bao gồm SRMD, IKC và KMSR. Mặt khác, Implicit modelling không phụ thuộc vào bất kỳ tham số hóa rõ ràng nào và chúng thường tìm hiểu thông qua phân phối dữ liệu. Trong số các phương pháp đó có CinCGAN [] và FSSR [].
+
+\begin{figure*} [!h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/mohinhxuongcap.png}
+    \caption{Mô hình xuống cấp được đề xuất.}
+    \label{fig:3.12}
+\end{figure*}
+
+\subsection{SwinIR}
+Các mô hình dựa trên Transformer được chú ý và có kết quả ngày càng vượt bậc. Đặc biệt, không chỉ áp dụng trong các bài toán phân loại hay xác định vật thể, năm 2021, mô hình SwinIR dựa trên Swin Transformer được ra đời, nhằm giải quyết tác vụ tăng cường chất lượng ảnh. Cụ thể hơn, SwinIR bao gồm ba mô-đun: Shallow feature extraction, Deep feature extraction and Highquality (HQ) image reconstruction. So với các mô hình khôi phục hình ảnh dựa trên CNN phổ biến lúc bấy giờ, SwinIR dựa trên Transformer đã đạt được hiệu suất ấn tượng hơn rất nhiều. Cụ thể, cao hơn cả về chỉ số PSNR trên tổng số tham số của mô hình. 
+
+\textbf{\begin{figure*} [!t]
+    \centering
+    \includegraphics[scale=0.4]{images/ESWT.png}
+    \caption{Kiến trúc mô hình ESWT.}
+    \label{fig:3.13}
+\end{figure*}}
+
+\section{Proposed Framework} \label{sect:proposed}  
+\subsection{Mô hình xuống cấp sử dụng} \label{sect:framework}
+Câu hỏi đặt ra là tại sao các nhà khoa học lại phải cần áp dụng mô hình xuống cấp? Rất đơn giản, về mặt dữ liệu, sẽ rất khó khăn để tìm kiếm nguồn cặp ảnh ở hai mức độ phân giải khác nhau. Bởi vì hai ảnh chụp bởi 2 sensor độ phân giải khác nhau không bao giờ nằm trên một vệ tinh nên có thể có ảnh HR và LR của một vùng nào đó nhưng là chụp 2 thời điểm khác nhau và do đó điều kiện sáng cũng khác nhau. Tuy nhiên, xây dựng được bộ dữ liệu hình ảnh chất lượng cao lại vô cùng dễ dàng, đặc biệt là với hình ảnh vệ tinh. Cho nên, người ta đã nghĩ ngay đến việc đưa hình ảnh chất lượng cao về hình ảnh chất lượng thấp hơn, sau đó huấn luyện một mô hình học cách tăng độ phân giải. Vào năm 2021, [] đã giới thiệu một mô hình xuống cấp khi nó có thể đạt được kết quả cao khi áp dụng trong thực tế. Nó giúp cho mô hình mở rộng được không gian xuống cấp nhiều hơn cùng với đó sẽ học được đa dạng thông tin hơn. Cụ thể, tác giả sẽ trình bày ba yếu tố: Mờ, Noise, Resize làm trọng tâm cho mô hình cũng như chiến lược xáo trộn mà mô hình đã đề xuất.
+
+\textbf{Mờ}: rất phổ biến trong các hình ảnh được chụp thực tế vì vậy việc áp dụng mờ trong hình ảnh HR là rất cần thiết. Cụ thể, hình ảnh HR sẽ bị làm mờ bởi một tích chập và nhân mờ (blur kernel). Isotropic Gaussian và anisotropic Gaussian kernel sẽ được áp dụng trong mô hình này. Các kích thước kernel được lựa chọn là 7 × 7, 9 × 9, ..., 21 × 21.
+
+\textbf{Resize (Downsampling)}: là thao tác cơ bản để tổng hợp hình ảnh có độ phân giải thấp trong SR. Tổng quát hơn, ta xem xét cả việc downsampling và upsampling, tức là thao tác thay đổi kích thước. Có một số thuật toán thay đổi kích thước mà mô hình áp dụng là nearest-neighbor interpolation, area resize, bilinear interpolation, và bicubic interpolation. Các thao tác thay đổi kích thước khác nhau mang lại các hiệu ứng khác nhau, một số tạo ra kết quả mờ trong khi một số có thể tạo ra hình ảnh quá sắc nét.
+
+\textbf{Noise}: Do các hạn chế vật lý vốn có của các thiết bị ghi khác nhau, hình ảnh có xu hướng bị nhiễu ngẫu nhiên trong quá trình thu nhận hình ảnh. Nhiễu có thể hiểu là hiện tượng méo tín hiệu cơ bản gây cản trở quá trình quan sát hình ảnh và trích xuất thông tin, vì thế rất nhiều loại nhiễu đã được sinh ra. Ngoài nhiễu Gaussian luôn có, mô hình xuống cấp mà chúng ta sử dụng cũng xem xét cả nhiễu nén JPEG (JPEG compression noise)
+
+\textbf{Chiến lược xáo trộn ngẫu nhiên và mô hình đề xuất}: Mặc dù đơn giản và thuận tiện về mặt toán học, mô hình xuống cấp cổ điển khó có thể bao phủ không gian xuống cấp của hình ảnh LR trong thực tế. Do đó, mô hình xuống cấp sẽ áp dụng một phương pháp xáo trộn ngẫu nhiên mới. Cụ thể, các loại Mờ, Downsampling và Noise khác nhau sẽ được xáo trộn ngẫu nhiên và với các thông số giản chất lượng khác nhau (hình 4 minh họa mô hình xuống cấp được đề xuất). Trong đó,
+\begin{itemize}
+ \item Trình tự áp dụng các phương pháp bao gồm {${{B}_{iso}}$, ${{B}_{aniso}}$, ${{D}^{s}}$, ${{N}_{G}}$, ${{N}_{JPEG}}$, ${{N}_{S}}$} được xáo trộn ngẫu nhiên
+ \item ${{D}^{s}}$ đại diện cho phương pháp Downsampling với hệ số tỷ lệ $s$ được chọn ngẫu nhiên từ {$D_{nearest}^{s}$, $D_{bilinear}^{s}$, $D_{bicubic}^{s}$, $D_{down-up}^{s}$}. 
+\end{itemize}
+
+Mô hình mà chúng ta sẽ áp dụng đã cho kết quả ấn tượng trên các tập dữ liệu thế giới thực, ví dụ tập dữ liệu Set14, BSD100, Urban100, ... Chi tiết mô hình, có thể tham khảo tại [].
+
+\textbf{Tùy chỉnh mô hình xuống cấp phù hợp với hình ảnh vệ tinh}: Khi chúng ta áp dụng mô hình xuống cấp đề xuất cho hình ảnh vệ tinh, một thứ không mong muốn đã xảy ra. Các hình ảnh LR được sinh ra, hầu hết cho chất lượng rất là thấp, thấp hơn nhiều so với hình ảnh LR của vệ tinh trong thực tế. Nó thường bị làm mờ quá mức hoặc tạo ra các artifact không có trong hình ảnh chất lượng thấp của vệ tinh. Điều này sẽ làm ảnh hưởng đến kết quả mô hình siêu phân giải khi đã để mất thông tin quá nhiều (hình 7). Để khắc phục điều đó, ta sẽ thay đổi một số chi tiết nhỏ trong mô hình xuống cấp. Cụ thể, hệ số chất lượng $q$ của JPEG noise được tăng lên ($q$ cao sẽ biểu thị tỉ lệ nén thấp hơn và khả năng tạo ra các artifact giảm), Bỏ 1 lớp blur thay vì áp dụng 2 lần blur cho một ảnh (giúp tránh việc bị mờ quá mức). Ngoài ra, thay vì một ảnh áp dụng 7 lần liên tiếp các loại xuống cấp khác nhau cho hình ảnh, ta thay thế bằng cách giảm số lần áp dụng và lấy ngẫu nhiên 7 loại đó. Cách áp dụng này, giúp hình ảnh không bị xuống cấp quá mức so với hình ảnh LR của vệ tinh trong thực tế mà còn vẫn đảm bảo được độ đa dạng và không gian xuống cấp của mô hình.
+
+\subsection{Efficient Striped Window Transformer} \label{sect:tensorrt}
+Trong những năm trở lại đây, các phương pháp sử dụng Transformer đang ngày càng được quan tâm, bởi nó dễ dàng cải tiến và mang lại kết quả ấn tượng. Tuy nhiên, rất khó để áp dụng trong lightweight SR (LSR) do thách thức về mặt hiệu suất và độ phức tạp của mô hình. Phương pháp LSR dựa trên transformer đầu tiên là SwinIR, phương pháp này vượt trội so với các phương pháp trước đây như SRCNN, SRResNet,... rất nhiều về độ chính xác. Tuy nhiên, về mặt tốc độ áp dung trong thế giới thực thì còn hạn chế do độ phức tạp mô hình của SwinIR. Để giải quyết vấn đề này, nhiều nghiên cứu đã được đề xuất, như ESRT sử dụng CNN ở phần nông mô hình trong khi duy trì transformer ở phần sâu để có sự đánh đổi giữa hiệu suất và độ phức tạp, ELAN cũng giải quyết vấn đề này bằng cách tối ưu và đơn giản hóa mô-đun chính WSA trong Transformer, giảm độ phức tạp của mô hình trong khi vẫn duy trì hiệu suất tương đương với SwinIR.
+
+Vì vậy, để có thể đạt hiệu suất cao hơn nữa trong thực tế, tác giả sử dụng mô hình ESWT để giải quyết bài toán nâng cao chất lượng ảnh vệ tinh. Mô hình ESWT (Efficient Striped Window Transformer) được giới thiệu vào tháng 03/2023, trong bài báo "Image Super-Resolution using Efficient Striped Window Transformer" của một nhóm các nhà nghiên cứu đến từ Đại học Khoa học và Công nghệ Trung Quốc. Mô hình sau khi được ra mắt đã tạo ra được
+một tiếng vang lớn vì tính ưu việt của nó (hình 5). Cụ thể:
+\begin{itemize}
+ \item Đưa ra một lớp mới mang tên Efficient transformation layer (ETL), lớp này sẽ giúp cho mô hình được tinh gọn hơn so với các mô hình trước, dẫn đến chi phí tính toán thấp hơn.
+ \item Sử dụng một cơ chế có tên cửa sổ sọc (striped window). Cơ chế này có thể giúp mô hình phụ thuộc dài hạn (Long-term Dependency Modeling) hiệu quả hơn và có độ phức tạp đơn giản hơn.
+ \item Ngoài ra, ESWT còn sử dụng một quy trình đào tạo mới. Không làm tăng thêm chi phí tính toán, quy trình này còn cho phép khám phá thêm nhiều đặc trưng của ảnh hơn.
+\end{itemize}
+
+
+
+
+\section{Experiments} \label{sect:experiment}
+\subsection{Dataset} \label{sect:dataset}
+\begin{figure} [!t]
+    \centering
+    \includegraphics[scale=0.23]{images/New Project.png}
+    \caption{Hình ảnh HR trong tập dữ liệu của chúng tôi.}
+    \label{fig:6}
+\end{figure}
+Trong bài báo này, bộ dữ liệu được thu thập bằng các nguồn dữ liệu hình ảnh vệ tinh. Để dữ liệu được đa dạng và phong phú, chúng tôi đã lấy ảnh từ các tọa độ địa lý khác nhau, từ giao thông cho đến núi rừng, .... Tập dữ liệu bao gồm 1178 hình ảnh với độ phân giải cao. Hình 6 minh họa một số hình ảnh trong bộ dữ liệu của chúng tôi. Chúng tôi sử dụng 900 ảnh để đào tạo, 200 ảnh để validate và 78 ảnh để thực nghiệm. Vì các hình ảnh chụp từ vệ tinh được chụp từ trên cao và có thể theo góc độ khác nhau, nên trong quá trình đào tạo, chúng tôi sử dụng phương pháp xoay ảnh để tăng cường dữ liệu.
+% dataset
+
+\subsection{Sử dụng mô hình xuống cấp để tạo dữ liệu LR} \label{sect:expRes}
+Như đã được đề cập ở phần trên, việc áp dụng mô hình xuống cấp là rất cần thiết cho bài toán của mình, đặc biệt với việc chúng ta chỉ thu thập hình ảnh HR sẽ dễ hơn là thu thập một cặp hình ảnh có chất lượng khác nhau. Để có được hình ảnh LR, chúng ta tạo ảnh multi-scale để có được nhiều ảnh ở tỉ lệ và độ phân giải khác nhau tăng tính đa dạng cho dữ liệu vói các tỉ lệ x2, x3 và x4. 
+
+\textbf{Degradation details}: Như đã được đề cập trong phần đề xuất, chúng tôi sẽ lấy ngẫu nhiên 4 trong 7 loại xuống cấp để áp dụng cho 1 bức ảnh. JPEG noise thay đổi hệ số chất lượng từ [30, 95] thành [40, 95], thay đổi độ nhiễu của nhiễu gaussion từ [2, 25] thành [2, 15]. Các chi tiết khác vẫn được giữ nguyên như trong [].
+
+% \begin{figure} [!t]
+%     \centering
+%     \includegraphics[scale=0.122]{images/Blank 6 Grids Collage.png}
+%     \caption{Hình ảnh bị xuống cấp quá mức khi áp dụng cho hình ảnh vệ tinh.}
+%     \label{fig:7}
+% \end{figure}
+
+\begin{figure}[h] \label{fig:8}
+    \begin{tabular}{cc}
+        \includegraphics[width=4cm,height=3cm]{images/HR_8.png} &
+        \includegraphics[width=4cm,height=3cm]{images/LR_8.png} \\
+        \includegraphics[width=4cm,height=3cm]{images/HR_9.png} &
+        \includegraphics[width=4cm,height=3cm]{images/LR_9.png} \\
+    \end{tabular}
+    \caption{Hình ảnh bị xuống cấp quá mức khi áp dụng cho hình ảnh vệ tinh.}
+\end{figure}
+
+% \begin{figure} [!t]
+%     \centering
+%     \includegraphics[scale=0.122]{images/process_.jpg}
+%     \caption{Hình ảnh LR sau khi áp dụng một số thay đổi trong mô hình đề xuất. Hình ảnh đã giảm sự xuống cấp quá mức mà vẫn giữ được độ đa dạng của tập dữ liệu.}
+%     \label{fig:8}
+% \end{figure}
+
+\begin{figure}[h] \label{fig:8}
+    \begin{tabular}{cc}
+        \includegraphics[width=4cm,height=3cm]{images/HR_3.png} &
+        \includegraphics[width=4cm,height=3cm]{images/LR_3.png} \\
+        \includegraphics[width=4cm,height=3cm]{images/HR_7.png} &
+        \includegraphics[width=4cm,height=3cm]{images/LR_7.png} \\
+    \end{tabular}
+    \caption{Hình ảnh LR sau khi áp dụng một số thay đổi trong mô hình đề xuất. Hình ảnh không bị giảm sự xuống cấp quá mức mà vẫn giữ được độ đa dạng của tập dữ liệu.}
+\end{figure}
+
+\subsection{Experimental Results} \label{sect:expRes}
+Để đánh giá chất lượng hình ảnh SR, chúng tôi sử dụng 2 chỉ số PSNR và SSIM để đánh giá. Các thử nghiệm của chúng tôi đều được đánh giá trên cả 2 tỉ lệ: x2, x4. Kích thước của window size cũng sẽ được mang ra thử nghiệm và đánh giá. Ngoài ra, để đánh giá toàn diện hơn, chúng tôi cũng so sánh nó với SwinIR trên tập dữ liệu x4. Hai số liệu cũng được sử dụng thêm để đo độ phức tạp của mô hình. “Params” biểu thị tổng số Parameter có thể học được. “Latency” là thời gian suy luận trung bình cho mỗi hình ảnh trên tập dữ liệu. Mô hình sử dụng L1 pixel loss cùng tối ưu hóa Adam. Tất cả các thí nghiệm của chúng tôi đều chạy trên card GeForce RTX 3060  với bộ nhớ 12GB. Dưới đây là kết quả mà chúng tôi đạt được:
+\begin{table}[!t]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    STT & Scale & Iteration (K) & Window Size & PSNR & SSIM\\ \hline
+    1  & x4 & 48  & (12,12) & 27.9957  & 0.7408   \\ \hline
+    2  & x4 & 48  & (18,8) & -  & - \\ \hline
+    3  & x4 & 48  & (24,6) & 28.0197 &  0.7411 \\ \hline
+    4  & x4 & 48  & (36,4) & - &  - \\ \hline
+    5  & x4 & 48  & (24,12) & 27.9855 &  0.7411 \\ \hline
+    \end{tabular}
+    \caption{Bảng đánh giá hiệu suất mô hình ESWT với các window size khác nhau.}
+\end{table}
+
+\begin{table}[!t]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    STT & Scale & Model & Window Size & PSNR & SSIM \\ \hline
+    1   & x2   & ESWT & (24,6) & 29.0536  & 0.8431   \\ \hline
+    2   & x4   & ESWT & (24,6) & 28.697 &  0.7576 \\ \hline
+    \end{tabular}
+    \caption{Performance statistics for the lightweight image SR model with three x2, x4 ratios.}
+\end{table}
+
+\begin{table}[!t]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|c|c|}
+    \hline
+    STT & Scale & Models & PSNR & SSIM & Params (K) & Latency (ms) \\ \hline
+    1   & x4   & SwinIR & 28.6315  & 0.7571 & 929 & 1339.52   \\ \hline
+    2   & x4   & ESWT & 28.697  & 0.7576 & 589 & 496.73 \\ \hline
+    \end{tabular}
+    \caption{The performance comparison table of the SwinIR and ESWT models on the x4 ratio.}
+\end{table}
+
+\textbf{Impact of Window Size}: Tác giả thử nghiệm tác động của Window Size đối với hiệu suất của ESWT. Để so sánh công bằng, các Window Size có kích thước khác nhau chứa cùng số lượng pixel. Các kết quả so sánh được trình bày trong table 1. Bảng này cho thấy hiệu suất của ESWT được cải thiện chỉ bằng cách kéo dài cửa sổ. Tuy nhiên, hiệu suất của mô hình giảm đáng kể khi sử dụng Window Size (36, 4). Điều này cho thấy rằng một cửa sổ quá dài sẽ ảnh hưởng đến việc sử dụng thông tin theo ngữ cảnh.
+
+\textbf{Quantitative SR Results}: Bảng 2 thể hiện độ chính xác sẽ được tăng dần khi tỉ lệ kích thước của HR và LR giảm dần. Điều này là hiển nhiên bởi số lượng pixel cần dự đoán đã giảm đi đáng kể. Ngoài ra, khi đánh giá các phương pháp SR, sự đánh đổi giữa hiệu suất và độ phức tạp của mô hình cũng là một yếu tố chính cần xem xét. Vì vậy, tác giả so sánh ESWT được đề xuất với mô hình SwinIR. Các kết quả so sánh ở ảnh SR ×4 được minh họa trong table 3. Bảng này cho thấy ESWT có ít tham số hơn, suy luận nhanh hơn và có độ chính xác cao hơn so với SwinIR. Cuối cùng, hình 9 thể hiện kết quả mà tác giả đạt được trên các hình ảnh vệ tinh có độ phân giải thấp.
+
+
+\section{Conclusions} \label{sect:conclusion}
+Chúng tôi đã trình bày bài toán tăng cường độ phân giải của hình ảnh vệ tinh. Cụ thể, áp dụng một mô hình xuống cấp cho hình ảnh HR đầu vào mà chúng tôi thu thập được, sinh ra lượng lớn các ảnh LR tương ứng, một số thay đổi nhỏ trong mô hình xuống cấp được đề xuất để phù hợp hơn với hình ảnh vệ tinh. Sau đó, tiến hành đào tạo mô hình siêu phân giải với các tỉ lệ và tác vụ khác nhau. Kết quả của mô hình cho thấy, nó vượt trội hơn mô hình so sánh SwinIR về mặt hiệu suất tính toán. Và kết quả này hoàn toàn có thể được áp dụng vào các bài toán thực tế liên quan đến hình ảnh vệ tinh khi nó có một mức tiêu thụ không quá cao. Trong tương lai, chúng tôi sẽ cố gắng để tìm ra một mô hình xuống cấp phù hợp hơn nữa cho hình ảnh vệ tinh như việc tính toán hệ số tốt nhất, áp dụng nhiều loại noise, rezise, blur. Ngoài ra, chúng tôi cũng tiếp tục tối ưu hóa mô hình bằng cách chuyển mô hình về các dạng TensorRT hay ONNX, và giảm mức tiêu thụ RAM của GPU nhiều nhất có thể.
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}
